@@ -1,6 +1,3 @@
-from flask import jsonify
-
-
 def passwordFormatIsGood(password):
     lowercase, uppercase, digits = 0, 0, 0
     if len(password) >= 8:

@@ -43,6 +43,7 @@ class Category(database.Model):
 
     id = database.Column(database.Integer, primary_key=True)
     name = database.Column(database.String(256), nullable=False)
+    numberOfSoldProducts = database.Column(database.Integer, nullable=False)
 
     products = database.relationship("Product", secondary=ProductCategory.__table__, back_populates="categories")
 
@@ -77,4 +78,4 @@ class Order(database.Model):
     products = database.relationship("Product", secondary=ProductOrder.__table__, back_populates="orders")
 
     def __repr__(self):
-        return "({}, {}, {}, {}, {}, {})".format(self.id, self.price, self.timestamp.isoformat(), self.userEmail, self.status.name, str(self.products))
+        return "({}, {}, {}, {}, {}, {}, {})".format(self.id, self.price, self.timestamp.isoformat(), self.userEmail, self.status.name, str(self.products), self.quantities)

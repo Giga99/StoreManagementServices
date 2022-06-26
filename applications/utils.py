@@ -7,3 +7,4 @@ class ProductOrderRequest:
     product_quantity: int
     product_price: float
     can_buy_product: bool
+    product_categories: list

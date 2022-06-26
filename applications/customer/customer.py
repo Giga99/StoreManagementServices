@@ -77,7 +77,14 @@ def orderProducts():
             return jsonify(message="Invalid product for request number {}.".format(index)), 400
 
         product_order_requests.append(
-            ProductOrderRequest(product_id, product_quantity, product.price, product.quantity >= product_quantity))
+            ProductOrderRequest(
+                product_id,
+                product_quantity,
+                product.price,
+                product.quantity >= product_quantity,
+                product.categories
+            )
+        )
         index = index + 1
 
     identity = get_jwt_identity()
@@ -98,6 +105,9 @@ def orderProducts():
         if p.can_buy_product:
             database.session.query(Product).filter(Product.id == p.product_id) \
                 .update({'quantity': Product.quantity - p.product_quantity})
+        for category in p.product_categories:
+            database.session.query(Category).filter(Category.id == category.id) \
+                .update({'numberOfSoldProducts': Category.numberOfSoldProducts + p.product_quantity})
 
     database.session.commit()
 

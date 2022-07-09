@@ -14,7 +14,7 @@ jwt = JWTManager(application)
 
 
 @application.route("/update", methods=["POST"])
-# @roleCheck(role="worker")
+@roleCheck(role="worker")
 def updateProducts():
     if "file" not in request.files.keys():
         return jsonify(message="Field file missing."), 400

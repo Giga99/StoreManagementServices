@@ -36,4 +36,4 @@ class Role(database.Model):
 
     ROLE_ADMIN = 1
     ROLE_CUSTOMER = 2
-    ROLE_WORKER = 3
+    ROLE_MANAGER = 3

@@ -1,5 +1,3 @@
-from email.utils import parseaddr
-
 from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, create_refresh_token, get_jwt, \
     get_jwt_identity
@@ -7,7 +5,8 @@ from sqlalchemy import and_
 
 from configuration import Configuration
 from models import database, User, UserRole, Role
-from utils import passwordFormatIsGood
+from utils import passwordFormatIsGood, emailFormatIsGood
+from applications.decorators import roleCheck
 
 application = Flask(__name__)
 application.config.from_object(Configuration)
@@ -40,8 +39,7 @@ def registerUser():
     elif is_customer_empty:
         return jsonify(message="Field isCustomer is missing."), 400
 
-    parsed_email = parseaddr(email)
-    if len(parsed_email[1]) == 0:
+    if not emailFormatIsGood(email):
         return jsonify(message="Invalid email."), 400
 
     if not passwordFormatIsGood(password):
@@ -54,7 +52,7 @@ def registerUser():
     database.session.add(user)
     database.session.commit()
 
-    role_id = Role.ROLE_CUSTOMER if is_customer else Role.ROLE_WORKER
+    role_id = Role.ROLE_CUSTOMER if is_customer else Role.ROLE_MANAGER
     user_role = UserRole(userId=user.id, roleId=role_id)
     database.session.add(user_role)
     database.session.commit()
@@ -75,8 +73,7 @@ def loginUser():
     elif password_empty:
         return jsonify(message="Field password is missing."), 400
 
-    parsed_email = parseaddr(email)
-    if len(parsed_email[1]) == 0:
+    if not emailFormatIsGood(email):
         return jsonify(message="Invalid email."), 400
 
     user = User.query.filter(and_(User.email == email, User.password == password)).first()
@@ -113,7 +110,7 @@ def refreshToken():
 
 
 @application.route("/delete", methods=["POST"])
-@jwt_required()
+@roleCheck(role="admin")
 def deleteUser():
     email = request.json.get("email", "")
 
@@ -122,8 +119,7 @@ def deleteUser():
     if email_empty:
         return jsonify(message="Field email is missing."), 400
 
-    parsed_email = parseaddr(email)
-    if len(parsed_email[1]) == 0:
+    if not emailFormatIsGood(email):
         return jsonify(message="Invalid email."), 400
 
     user = User.query.filter(User.email == email).first()

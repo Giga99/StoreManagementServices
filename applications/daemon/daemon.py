@@ -53,8 +53,12 @@ def daemonWork():
                     if bad_categories:
                         continue
 
-                    product.price = (product.quantity * product.price + quantity * price) / (product.quantity + quantity)
-                    product.quantity += quantity
+                    database.session.query(Product).filter(Product.id == product.id).update(
+                        {'price': (Product.quantity * Product.price + quantity * price) / (Product.quantity + quantity)}
+                    )
+                    database.session.query(Product).filter(Product.id == product.id).update(
+                        {'quantity': Product.quantity + quantity}
+                    )
                     database.session.commit()
 
                     pending_orders = Product.query \
@@ -83,7 +87,7 @@ if __name__ == "__main__":
 
             done = True
         except Exception as ex:
-            application.logger.info("Database didn't respond. Try again in 1 sec.")
+            print("Database didn't respond. Try again in 1 sec.")
             sleep(1)
 
     database.init_app(application)
@@ -93,9 +97,9 @@ if __name__ == "__main__":
             database.create_all()
             database.session.commit()
 
-    daemonThread = threading.Thread(name="daemon_product_thread", target=daemonWork)
-    daemonThread.daemon = True
+    daemonThread = threading.Thread(name="daemon_product_thread", target=daemonWork, daemon=True)
     daemonThread.start()
 
     # application.run(debug=True, host="0.0.0.0", port=5001)
-    application.run(debug=True, port=5005)
+    application.run(debug=False, port=5005)
+    daemonThread.join()

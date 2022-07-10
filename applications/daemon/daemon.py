@@ -77,10 +77,10 @@ def daemonWork():
 
                             database.session.commit()
                         else:
-                            database.session.query(Product).filter(Product.id == product.id).update({'quantity': 0})
                             database.session.query(ProductOrder).filter(ProductOrder.id == product_order.id).update(
                                 {'received': ProductOrder.received + product.quantity}
                             )
+                            database.session.query(Product).filter(Product.id == product.id).update({'quantity': 0})
                             database.session.commit()
                             break
 

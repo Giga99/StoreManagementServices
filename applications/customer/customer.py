@@ -98,7 +98,7 @@ def orderProducts():
         )
         for category in product.categories:
             database.session.query(Category).filter(Category.id == category.id).update(
-                {'numberOfSoldProducts': Category.numberOfSoldProducts + received}
+                {'numberOfSoldProducts': Category.numberOfSoldProducts + requested_quantity}
             )
         database.session.flush()
         index = index + 1

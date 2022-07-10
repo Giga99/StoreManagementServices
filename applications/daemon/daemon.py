@@ -61,18 +61,23 @@ def daemonWork():
                     )
                     database.session.commit()
 
-                    pending_orders = Product.query \
-                        .join(ProductOrder).join(Order) \
-                        .filter(
-                            Product.id == product.id,
-                            Order.quantities[product.id][0] != Order.quantities[product.id][1]
-                        ).order_by(Order.timestamp).all()
-
-                    for order in pending_orders:
-                        if order.quantities[product.id][1] < product.quantity:
-                            order.quantities[product.id][0] = order.quantities[product.id][1]
-                            product.quantity -= order.quantities[product.id][1]
+                    pending_product_orders = product.get_pending_product_orders()
+                    for product_order in pending_product_orders:
+                        if (product_order.requested - product_order.received) <= product.quantity:
+                            database.session.query(Product).filter(Product.id == product.id).update(
+                                {'quantity': Product.quantity - (product_order.requested - product_order.received)}
+                            )
+                            database.session.query(ProductOrder).filter(ProductOrder.id == product_order.id).update(
+                                {'received': product_order.requested}
+                            )
                             database.session.commit()
+                        else:
+                            database.session.query(Product).filter(Product.id == product.id).update({'quantity': 0})
+                            database.session.query(ProductOrder).filter(ProductOrder.id == product_order.id).update(
+                                {'received': ProductOrder.received + product.quantity}
+                            )
+                            database.session.commit()
+                            break
 
 
 if __name__ == "__main__":

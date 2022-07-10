@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
+from sqlalchemy import and_
 
 database = SQLAlchemy()
 
@@ -18,9 +19,22 @@ class ProductOrder(database.Model):
     id = database.Column(database.Integer, primary_key=True)
     productId = database.Column(database.Integer, database.ForeignKey("products.id"), nullable=False)
     orderId = database.Column(database.Integer, database.ForeignKey("orders.id"), nullable=False)
+    price = database.Column(database.Float, nullable=False)
+    received = database.Column(database.Integer, nullable=False)
+    requested = database.Column(database.Integer, nullable=False)
+
+    def to_dict(self):
+        product = Product.query.filter(Product.id == self.productId).first()
+        return {
+            "categories": [category.name for category in product.categories],
+            "name": product.name,
+            "price": self.price,
+            "received": self.received,
+            "requested": self.requested
+        }
 
     def __repr__(self):
-        return "({}, {}, {}, {}, {})".format(self.id, self.productId, self.orderId, self.receivedQuantity, self.requestedQuantity)
+        return "({}, {}, {}, {}, {})".format(self.id, self.productId, self.orderId, self.received, self.requested)
 
 
 class Product(database.Model):
@@ -33,6 +47,14 @@ class Product(database.Model):
 
     categories = database.relationship("Category", secondary=ProductCategory.__table__, back_populates="products")
     orders = database.relationship("Order", secondary=ProductOrder.__table__, back_populates="products")
+
+    def get_pending_product_orders(self):
+        return ProductOrder.query.join(Order).filter(
+            and_(
+                ProductOrder.productId == self.id,
+                ProductOrder.requested != ProductOrder.received
+            )
+        ).order_by(Order.timestamp).all()
 
     def __repr__(self):
         return "({}, {}, {}, {}, {})".format(self.id, self.name, self.price, self.quantity, str(self.categories))
@@ -67,15 +89,16 @@ class Order(database.Model):
     __tablename__ = "orders"
 
     id = database.Column(database.Integer, primary_key=True)
-    price = database.Column(database.Float, nullable=False)
     timestamp = database.Column(database.DateTime(timezone=True), server_default=func.now(), nullable=False)
     userEmail = database.Column(database.String(256), nullable=False)
-    quantities = database.Column(database.JSON, nullable=False)
 
     statusId = database.Column(database.Integer, database.ForeignKey("orderstatus.id"), nullable=False)
     status = database.relationship("OrderStatus", back_populates="orders")
 
     products = database.relationship("Product", secondary=ProductOrder.__table__, back_populates="orders")
 
+    def get_product_orders(self):
+        return ProductOrder.query.filter(ProductOrder.orderId == self.id).all()
+
     def __repr__(self):
-        return "({}, {}, {}, {}, {}, {}, {})".format(self.id, self.price, self.timestamp.isoformat(), self.userEmail, self.status.name, str(self.products), self.quantities)
+        return "({}, {}, {}, {}, {}, {})".format(self.id, self.price, self.timestamp.isoformat(), self.userEmail, self.status.name, str(self.products))

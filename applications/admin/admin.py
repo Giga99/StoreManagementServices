@@ -4,7 +4,8 @@ from sqlalchemy import desc
 
 from applications.configuration import Configuration
 from applications.decorators import roleCheck
-from applications.models import database, Product, Category
+from applications.models import database, Product, Category, ProductOrder
+from sqlalchemy import func
 
 application = Flask(__name__)
 application.config.from_object(Configuration)
@@ -16,10 +17,14 @@ jwt = JWTManager(application)
 def getProductStatistics():
     statistics = [
         {
-            "name": product.name,
-            "sold": sum(o.quantities[str(product.id)][1] for o in product.orders),
-            "waiting": sum(o.quantities[str(product.id)][1] if o.quantities[str(product.id)][0] == 0 else 0 for o in product.orders)
-        } for product in Product.query.all()
+            "name": product_order[0],
+            "sold": int(product_order[1]),
+            "waiting": int(product_order[2])
+        } for product_order in ProductOrder.query.join(Product).with_entities(
+                Product.name,
+                func.sum(ProductOrder.requested),
+                func.sum(ProductOrder.requested - ProductOrder.received)
+        ).group_by(Product.name).all()
     ]
 
     return jsonify(statistics=statistics)

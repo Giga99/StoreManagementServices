@@ -70,6 +70,11 @@ def daemonWork():
                             database.session.query(ProductOrder).filter(ProductOrder.id == product_order.id).update(
                                 {'received': product_order.requested}
                             )
+
+                            order = Order.query.filter(Order.id == product_order.orderId).first()
+                            if all(product_order.requested == product_order.received for product_order in order.get_product_orders()):
+                                database.session.query(Order).filter(Order.id == order.id).update({'statusId': 1})
+
                             database.session.commit()
                         else:
                             database.session.query(Product).filter(Product.id == product.id).update({'quantity': 0})

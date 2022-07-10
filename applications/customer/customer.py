@@ -17,7 +17,6 @@ jwt = JWTManager(application)
 def searchProduct():
     name = request.args["name"] if "name" in request.args.keys() else ""
     category = request.args["category"] if "category" in request.args.keys() else ""
-    print("ARGS: {}, {}".format(name, category))
 
     categories = [c.name for c in Category.query.join(ProductCategory).join(Product).filter(
         and_(
@@ -25,7 +24,6 @@ def searchProduct():
             Product.name.like(f"%{name}%")
         )
     ).all()]
-    print("Categories: ", categories)
 
     products = [
         {
@@ -41,7 +39,6 @@ def searchProduct():
             )
         ).all()
     ]
-    print("Products: ", products)
 
     return jsonify(categories=categories, products=products)
 
@@ -96,7 +93,7 @@ def orderProducts():
         quantities[p.product_id] = [p.product_quantity if p.can_buy_product else 0, p.product_quantity]
     order = Order(
         price=sum(p.product_price * p.product_quantity for p in product_order_requests),
-        statusId=1 if any(p.can_buy_product for p in product_order_requests) else 2,
+        statusId=1 if all(p.can_buy_product for p in product_order_requests) else 2,
         userEmail=identity,
         quantities=quantities
     )
@@ -127,7 +124,6 @@ def getOrders():
             "products": [
                 {
                     "categories": [category.name for category in product.categories],
-                    "id": product.id,
                     "name": product.name,
                     "price": product.price,
                     "received": order.quantities.get(str(product.id))[0],

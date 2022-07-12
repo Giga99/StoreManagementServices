@@ -5,7 +5,7 @@ from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager
 from redis import Redis
 
-from applications.configuration import Configuration
+from configuration import Configuration
 from applications.decorators import roleCheck
 
 application = Flask(__name__)
@@ -52,5 +52,4 @@ def updateProducts():
 
 
 if __name__ == "__main__":
-    # application.run(debug=True, host="0.0.0.0", port=5001)
-    application.run(debug=True, port=5004)
+    application.run(debug=True, host="0.0.0.0", port=5004)

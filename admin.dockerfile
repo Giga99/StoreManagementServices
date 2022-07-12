@@ -3,14 +3,13 @@ FROM python:3
 RUN mkdir -p /opt/src/market/admin
 WORKDIR /opt/src/market/admin
 
-COPY applications/admin/admin.py ./admin.py
-COPY applications/configuration.py ./configuration.py
-COPY applications/models.py ./models.py
-COPY applications/decorators.py ./decorators.py
-COPY applications/requirements.txt ./requirements.txt
+COPY applications/admin applications/admin
+COPY applications/models.py applications/models.py
+COPY applications/decorators.py applications/decorators.py
+COPY applications/requirements.txt applications/requirements.txt
 
-RUN pip install -r ./requirements.txt
+RUN pip install -r ./applications/requirements.txt
 
 ENV PYTHONPATH="/opt/src/market/admin"
 
-ENTRYPOINT ["python", "./admin.py"]
+ENTRYPOINT ["python", "./applications/admin/admin.py"]

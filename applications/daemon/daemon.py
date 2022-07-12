@@ -5,8 +5,8 @@ from flask import Flask
 from redis import Redis
 from sqlalchemy_utils import database_exists, create_database
 
-from applications.configuration import Configuration
-from applications.models import database, Product, Category, ProductCategory, Order, ProductOrder
+from configuration import Configuration
+from applications.models import database, Product, Category, ProductCategory, Order, ProductOrder, OrderStatus
 
 application = Flask(__name__)
 application.config.from_object(Configuration)
@@ -85,6 +85,19 @@ def daemonWork():
                             break
 
 
+def init_database(application):
+    with application.app_context() as context:
+        database.create_all()
+        database.session.commit()
+
+        complete_order_status = OrderStatus(name="COMPLETE")
+        pending_order_status = OrderStatus(name="PENDING")
+
+        database.session.add(complete_order_status)
+        database.session.add(pending_order_status)
+        database.session.commit()
+
+
 if __name__ == "__main__":
     done = False
     initRequired = True
@@ -103,13 +116,9 @@ if __name__ == "__main__":
     database.init_app(application)
 
     if initRequired:
-        with application.app_context() as context:
-            database.create_all()
-            database.session.commit()
+        init_database(application)
 
     daemonThread = threading.Thread(name="daemon_product_thread", target=daemonWork, daemon=True)
     daemonThread.start()
 
-    # application.run(debug=True, host="0.0.0.0", port=5001)
-    application.run(debug=False, port=5005)
-    daemonThread.join()
+    application.run(debug=False, host="0.0.0.0", port=5005)

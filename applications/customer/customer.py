@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager, get_jwt_identity
 from sqlalchemy import and_
 
-from applications.configuration import Configuration
+from configuration import Configuration
 from applications.decorators import roleCheck
 from applications.models import database, Product, Category, ProductCategory, Order, ProductOrder
 
@@ -129,5 +129,4 @@ def getOrders():
 
 if __name__ == "__main__":
     database.init_app(application)
-    # application.run(debug=True, host="0.0.0.0", port=5001)
-    application.run(debug=True, port=5001)
+    application.run(debug=True, host="0.0.0.0", port=5001)

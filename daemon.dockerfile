@@ -1,15 +1,14 @@
 FROM python:3
 
-RUN mkdir -p /opt/src/market/customer
+RUN mkdir -p /opt/src/market/daemon
 WORKDIR /opt/src/market/daemon
 
-COPY applications/daemon/daemon.py ./daemon.py
-COPY applications/configuration.py ./configuration.py
-COPY applications/models.py ./models.py
-COPY applications/requirements.txt ./requirements.txt
+COPY applications/daemon applications/daemon
+COPY applications/models.py applications/models.py
+COPY applications/requirements.txt applications/requirements.txt
 
-RUN pip install -r ./requirements.txt
+RUN pip install -r ./applications/requirements.txt
 
 ENV PYTHONPATH="/opt/src/market/daemon"
 
-ENTRYPOINT ["python", "./daemon.py"]
+ENTRYPOINT ["python", "./applications/daemon/daemon.py"]

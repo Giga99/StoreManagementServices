@@ -1,0 +1,118 @@
+version: '3'
+
+services:
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    networks:
+      - authentication_network
+      - market_network
+
+  redis:
+    image: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - products_network
+
+  authenticationDatabase:
+    image: mysql
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    volumes:
+      - authentication-data:/var/lib/mysql
+    networks:
+      - authentication_network
+    ports:
+      - "3306:3306"
+
+  marketDatabase:
+    image: mysql
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    volumes:
+      - market-data:/var/lib/mysql
+    networks:
+      - market_network
+    ports:
+      - "3307:3306"
+
+  customer:
+    build:
+      context: .
+      dockerfile: customer.dockerfile
+    image: 127.0.0.1:5000/customer
+    restart: always
+    environment:
+      - DATABASE_URL=marketDatabase
+    ports:
+      - "5001:5001"
+    networks:
+      - market_network
+
+  authentication:
+    build:
+      context: .
+      dockerfile: authentication.dockerfile
+    image: 127.0.0.1:5000/authentication
+    restart: always
+    environment:
+      - DATABASE_URL=authenticationDatabase
+    ports:
+      - "5002:5002"
+    networks:
+      - authentication_network
+
+  admin:
+    build:
+      context: .
+      dockerfile: admin.dockerfile
+    image: 127.0.0.1:5000/admin
+    restart: always
+    environment:
+      - DATABASE_URL=marketDatabase
+    ports:
+      - "5003:5003"
+    networks:
+      - market_network
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker.dockerfile
+    image: 127.0.0.1:5000/worker
+    restart: always
+    environment:
+      - DATABASE_URL=marketDatabase
+    ports:
+      - "5004:5004"
+    networks:
+      - products_network
+
+  daemon:
+    build:
+      context: .
+      dockerfile: daemon.dockerfile
+    image: 127.0.0.1:5000/daemon
+    restart: always
+    environment:
+      - DATABASE_URL=marketDatabase
+    ports:
+      - "5005:5005"
+    networks:
+      - products_network
+      - market_network
+
+volumes:
+  authentication-data:
+  market-data:
+
+networks:
+  authentication_network:
+  market_network:
+  products_network:

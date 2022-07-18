@@ -12,7 +12,7 @@ application = Flask(__name__)
 application.config.from_object(Configuration)
 
 
-def daemonWork():
+def daemon_work():
     with application.app_context() as context:
         while True:
             with Redis(host=Configuration.REDIS_HOST) as redis:
@@ -100,13 +100,13 @@ def init_database(application):
 
 if __name__ == "__main__":
     done = False
-    initRequired = True
+    init_required = True
     while not done:
         try:
             if not database_exists(application.config["SQLALCHEMY_DATABASE_URI"]):
                 create_database(application.config["SQLALCHEMY_DATABASE_URI"])
             else:
-                initRequired = False
+                init_required = False
 
             done = True
         except Exception as ex:
@@ -115,10 +115,10 @@ if __name__ == "__main__":
 
     database.init_app(application)
 
-    if initRequired:
+    if init_required:
         init_database(application)
 
-    daemonThread = threading.Thread(name="daemon_product_thread", target=daemonWork, daemon=True)
-    daemonThread.start()
+    daemon_thread = threading.Thread(name="daemon_product_thread", target=daemon_work, daemon=True)
+    daemon_thread.start()
 
     application.run(debug=False, host="0.0.0.0", port=5005)

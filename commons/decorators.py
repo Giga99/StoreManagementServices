@@ -1,3 +1,4 @@
+import http
 from functools import wraps
 
 from flask import jsonify
@@ -13,7 +14,7 @@ def roleCheck(role):
             if ("roles" in claims) and (role in claims["roles"]):
                 return function(*arguments, **keyword_arguments)
             else:
-                return jsonify(msg="Missing Authorization Header"), 401
+                return jsonify(msg="Missing Authorization Header"), http.HTTPStatus.UNAUTHORIZED
 
         return decorator
 

@@ -1,54 +1,39 @@
 import csv
 import io
+import http
 
 from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager
-from redis import Redis
 
 from configuration import Configuration
-from applications.decorators import roleCheck
+from commons.decorators import roleCheck
+from commons.exceptions import BadRequestException
+from worker_controller import WorkerController
 
 application = Flask(__name__)
 application.config.from_object(Configuration)
 jwt = JWTManager(application)
 
+worker_controller = WorkerController()
+
 
 @application.route("/update", methods=["POST"])
 @roleCheck(role="manager")
-def updateProducts():
+def update_products():
     if "file" not in request.files.keys():
-        return jsonify(message="Field file is missing."), 400
+        return jsonify(message="Field file is missing."), http.HTTPStatus.BAD_REQUEST
 
     content = request.files["file"].stream.read().decode("utf-8")
     stream = io.StringIO(content)
     reader = csv.reader(stream)
 
-    index = 0
-    products = []
-    for row in reader:
-        if len(row) != 4:
-            return jsonify(message="Incorrect number of values on line {}.".format(index)), 400
+    num_of_products = 0
+    try:
+        num_of_products = worker_controller.update_products(reader)
+    except BadRequestException as ex:
+        return jsonify(message=str(ex)), http.HTTPStatus.BAD_REQUEST
 
-        try:
-            if int(row[2]) <= 0:
-                return jsonify(message="Incorrect quantity on line {}.".format(index)), 400
-        except ValueError:
-            return jsonify(message="Incorrect quantity on line {}.".format(index)), 400
-
-        try:
-            if float(row[3]) <= 0:
-                return jsonify(message="Incorrect price on line {}.".format(index)), 400
-        except ValueError:
-            return jsonify(message="Incorrect price on line {}.".format(index)), 400
-
-        products.append(row)
-        index = index + 1
-
-    for row in products:
-        with Redis(host=Configuration.REDIS_HOST) as redis:
-            redis.rpush(Configuration.REDIS_PRODUCTS_LIST, ",".join(row))
-
-    return jsonify(message="Successfully pushed {} on redis".format("products" if index > 1 else "product"))
+    return jsonify(message="Successfully pushed {} on redis".format("products" if num_of_products > 1 else "product")), http.HTTPStatus.OK
 
 
 if __name__ == "__main__":

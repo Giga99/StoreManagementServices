@@ -1,41 +1,40 @@
+import http
+
 from flask import Flask, jsonify
 from flask_jwt_extended import JWTManager
-from sqlalchemy import desc, func
 
-from applications.decorators import roleCheck
-from applications.models import database, Product, Category, ProductOrder
+from admin_controller import AdminController
+from commons.decorators import roleCheck
+from applications.models import database
 from configuration import Configuration
 
 application = Flask(__name__)
 application.config.from_object(Configuration)
 jwt = JWTManager(application)
 
+adminController = AdminController()
+
 
 @application.route("/productStatistics", methods=["GET"])
 @roleCheck(role="admin")
-def getProductStatistics():
+def get_product_statistics():
     statistics = [
         {
             "name": product_order[0],
             "sold": int(product_order[1]),
             "waiting": int(product_order[2])
-        } for product_order in ProductOrder.query.join(Product).with_entities(
-            Product.name,
-            func.sum(ProductOrder.requested),
-            func.sum(ProductOrder.requested - ProductOrder.received)
-        ).group_by(Product.name).all()
+        } for product_order in adminController.get_products_statistics()
     ]
 
-    return jsonify(statistics=statistics)
+    return jsonify(statistics=statistics), http.HTTPStatus.OK
 
 
 @application.route("/categoryStatistics", methods=["GET"])
 @roleCheck(role="admin")
-def getCategoryStatistics():
-    categories = Category.query.order_by(desc(Category.numberOfSoldProducts), Category.name).all()
-    statistics = [c.name for c in categories]
+def get_category_statistics():
+    statistics = [c.name for c in adminController.get_category_statistics()]
 
-    return jsonify(statistics=statistics)
+    return jsonify(statistics=statistics), http.HTTPStatus.OK
 
 
 if __name__ == "__main__":

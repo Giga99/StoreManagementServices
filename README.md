@@ -23,7 +23,7 @@ Authentication is done via JWT tokens. There are 4 APIs:
 
 ### Register
 Register user.
-```
+```http
 POST http://127.0.0.1:5002/register
 
 Headers:
@@ -51,7 +51,7 @@ Failure Response:
 
 ### Login
 Login user and return access and refresh token.
-```
+```http
 POST http://127.0.0.1:5002/login
 
 Headers:
@@ -77,7 +77,7 @@ Failure Response:
 
 ### Refresh
 Refresh the access token.
-```
+```http
 POST http://127.0.0.1:5002/refresh
 
 Headers:
@@ -96,7 +96,7 @@ Failure Response:
 
 ### Delete User
 Delete the user, this API is only allowed to be called by an admin.
-```
+```http
 POST http://127.0.0.1:5002/delete
 
 Headers:
@@ -124,7 +124,7 @@ These are APIs for admin users. There are two APIs:
 
 ### Get Products Statistics
 Get all products and return name, sold quantity and quantity that is needed to complete uncompleted orders
-```
+```http
 GET http://127.0.0.1:5003/productStatistics
 
 Headers:
@@ -160,7 +160,7 @@ Failure Response:
 
 ### Get Categories Statistics
 Get categories sorted descending by sold products.
-```
+```http
 GET http://127.0.0.1:5003/categoryStatistics
 
 Headers:
@@ -194,7 +194,7 @@ This API searches for all products and categories. Query params are optional.
 It returns:
 - categories which name contains `category` param and has atleast one product which name contains `name` param 
 - products which name contains `name` param and has atleast one category which name contains `category` param
-```
+```http
 GET http://127.0.0.1:5001/search
 
 Headers:
@@ -236,7 +236,7 @@ Failure Response:
 
 ### Order products
 This API order products, it requers list of ids of products and their quantity. It returns id of the order.
-```
+```http
 POST http://127.0.0.1:5001/order
 
 Headers:
@@ -270,7 +270,7 @@ Failure Response:
 
 ### Get orders
 This API returns orders for the user. It returns list of orders, each order contains list of products with their categories.
-```
+```http
 GET http://127.0.0.1:5001/status
 
 Headers:
@@ -315,7 +315,7 @@ This part is for the workers of the store. It has only one API:
 
 ### Update products
 This API takes `csv` file which contains products that should be updated. If file has correct data, products will be pushed to the `Redis` service.
-```
+```http
 GET http://127.0.0.1:5001/status
 
 Headers:
